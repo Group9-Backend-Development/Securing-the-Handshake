@@ -1,8 +1,8 @@
+// Contact Management System with CSRF Protection
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
-const path = require('path');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const csrf = require('csurf');
@@ -20,7 +20,6 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser()); // Required for csurf
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Session Configuration
 app.use(session({
@@ -41,30 +40,19 @@ app.use(csrfProtection);
 // In-memory storage (Mock seeding)
 const users = [
   {
-    username: 'photolover',
+    username: 'Ritheavong',
     password: bcrypt.hashSync('password123', 10)
   }
 ];
-const posts = [
+const contact = [
   {
     id: 1,
-    username: 'photolover',
-    imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop',
-    caption: 'Welcome to my minimal Instagram clone with CSRF Protection! 📸',
-    timestamp: new Date()
+    username: 'Seth Kdab',
+    phonenumber: '123-456-7890',
   }
 ];
 
-// Multer Setup for Image Uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
+
 
 // Session Middleware
 const authenticateSession = (req, res, next) => {
@@ -121,38 +109,53 @@ app.get('/api/auth/me', (req, res) => {
   }
 });
 
-// Feed Route
-app.get('/api/feed', (req, res) => {
-  res.json(posts);
+
+// Contact Routes
+
+// Get all contacts 
+app.get('/api/contacts', authenticateSession, (req, res) => {
+  res.json(contact);
 });
 
-// Profile Route
-app.get('/api/profile/:username', (req, res) => {
-  const { username } = req.params;
-  const userPosts = posts.filter(p => p.username === username);
-  res.json({
+//Create a new contact
+app.post('/api/contacts', authenticateSession, (req, res) => {
+  const { username, phonenumber } = req.body;
+  if (!username || !phonenumber) return res.status(400).json({ message: 'Username and phone number required' });
+
+  const newContact = {
+    id: contact.length + 1,
     username,
-    posts: userPosts,
-    postCount: userPosts.length
-  });
-});
-
-// Upload Route
-app.post('/api/upload', authenticateSession, upload.single('image'), (req, res) => {
-  const { caption } = req.body;
-  if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
-
-  const newPost = {
-    id: posts.length + 1,
-    username: req.session.user.username,
-    imageUrl: `/uploads/${req.file.filename}`,
-    caption,
-    timestamp: new Date(),
+    phonenumber
   };
-
-  posts.unshift(newPost);
-  res.status(201).json(newPost);
+  contact.push(newContact);
+  res.status(201).json(newContact);
 });
+
+// Update a contact
+app.put('/api/contacts/:id', authenticateSession, (req, res) => {
+  const { id } = req.params;
+  const { username, phonenumber } = req.body;
+  const existingContact = contact.find(c => c.id === parseInt(id));
+
+  if (!existingContact) return res.status(404).json({ message: 'Contact not found' });
+  if (!username || !phonenumber) return res.status(400).json({ message: 'Username and phone number required' });
+
+  existingContact.username = username;
+  existingContact.phonenumber = phonenumber;
+  res.json(existingContact);
+});
+
+// Delete a contact
+app.delete('/api/contacts/:id', authenticateSession, (req, res) => {
+  const { id } = req.params;
+  const index = contact.findIndex(c => c.id === parseInt(id));
+
+  if (index === -1) return res.status(404).json({ message: 'Contact not found' });
+
+  contact.splice(index, 1);
+  res.json({ message: 'Contact deleted' });
+});
+
 
 // Error handling for CSRF errors
 app.use((err, req, res, next) => {
