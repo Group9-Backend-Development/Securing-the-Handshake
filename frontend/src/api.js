@@ -91,4 +91,17 @@ export const api = {
     if (!res.ok) throw new Error(data.message || 'Failed to add contact');
     return data;
   },
+
+  async deleteContact(contactId, csrfToken) {
+    const res = await this.fetchWithCreds(`${API_BASE_URL}/contacts/${contactId}`, {
+      method: 'DELETE',
+      headers: {
+        'x-csrf-token': csrfToken,
+      },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete contact');
+    return data;
+  },
 };

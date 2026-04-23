@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { api } from '../api';
 
 export default function Upload({ onUploadSuccess }) {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [phonenumber, setPhonenumber] = useState('');
   const [csrfToken, setCsrfToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +24,7 @@ export default function Upload({ onUploadSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!name || !phone) {
+    if (!username || !phonenumber) {
       setError('Name and phone are required');
       return;
     }
@@ -34,9 +33,9 @@ export default function Upload({ onUploadSuccess }) {
     setError('');
 
     try {
-      await api.addContact({ name, phone }, csrfToken);
-      setName('');
-      setPhone('');
+      await api.addContact({ username, phonenumber }, csrfToken);
+      setUsername('');
+      setPhonenumber('');
       onUploadSuccess();
     } catch (err) {
       setError(err.message);
@@ -60,8 +59,8 @@ export default function Upload({ onUploadSuccess }) {
         <input
           type="text"
           placeholder="Full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="border rounded p-2 text-sm"
           required
         />
@@ -69,19 +68,12 @@ export default function Upload({ onUploadSuccess }) {
         <input
           type="text"
           placeholder="Phone number"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={phonenumber}
+          onChange={(e) => setPhonenumber(e.target.value)}
           className="border rounded p-2 text-sm"
           required
         />
 
-        <input
-          type="email"
-          placeholder="Email address (optional)"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border rounded p-2 text-sm"
-        />
 
         <button
           type="submit"
